@@ -2,7 +2,7 @@ local DNI = RegisterMod("Dynamic Note Items", 1)
 
 --PauseMenu
 DNI.Appeared = false
-DNI.PauseMenu = true
+DNI.PauseMenu = false
 DNI.Paused = false
 DNI.MenuItems = {
 	OPTIONS = 1,
@@ -112,7 +112,7 @@ function DNI:renderPause() --renders the pause menu list
 	else --reset vars and clear table
 		DNI.MenuItem = DNI.MenuItems.RESUME
 		DNI.Appeared = false 
-		DNI.PauseMenu = true
+		DNI.PauseMenu = false
 		local tmpHUD = toRender.HUD
 		toRender = {HUD = tmpHUD}
 	end
@@ -133,7 +133,7 @@ end
 function DNI:reset() --resets vars
 	if Game():GetFrameCount() <= 1 or not Game():IsPaused() then
 		DNI.Appeared = false
-		DNI.PauseMenu = true
+		DNI.PauseMenu = false
 		DNI.Paused = false
 		DNI.MenuItem = DNI.MenuItems.RESUME
 	end
