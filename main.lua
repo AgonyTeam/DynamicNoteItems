@@ -2,7 +2,8 @@ local DNI = RegisterMod("Dynamic Note Items", 1)
 
 --PauseMenu
 DNI.Appeared = false
-DNI.PauseMenu = false
+DNI.PauseMenu = true
+DNI.Paused = false
 DNI.MenuItems = {
 	OPTIONS = 1,
 	RESUME = 2,
@@ -48,7 +49,7 @@ function DNI:calcPauseItemPosition(index)
 end
 
 function DNI:renderPause() --renders the pause menu list
-	if Game():IsPaused() then
+	if DNI.Paused then
 		if DNI.PauseMenu then --if in main pause menu
 			if Input.IsActionTriggered(ButtonAction.ACTION_MENUUP, 0) then --track cursor movement
 				if DNI.MenuItem > DNI.MenuItems.OPTIONS then
@@ -88,6 +89,8 @@ function DNI:renderPause() --renders the pause menu list
 			DNI.Appeared = true
 		elseif toRender.HUD:IsFinished("Appear") and not toRender.HUD:IsPlaying("Dissapear") then
 			toRender.HUD:Play("Idle")
+		elseif toRender.HUD:IsFinished("Dissapear") then
+			DNI.Paused = false
 		end
 		toRender.HUD:Render(DNI.POS_MY_LIST, Vector(0,0), Vector(0,0))
 		toRender.HUD:Update()
@@ -109,20 +112,33 @@ function DNI:renderPause() --renders the pause menu list
 	else --reset vars and clear table
 		DNI.MenuItem = DNI.MenuItems.RESUME
 		DNI.Appeared = false 
-		DNI.PauseMenu = false
+		DNI.PauseMenu = true
 		local tmpHUD = toRender.HUD
 		toRender = {HUD = tmpHUD}
 	end
 end
 
-function DNI:test()
-	--Isaac.DebugString(DNI:getFilename(520))
-	--if Game():GetFrameCount() <= 1 then
-	--	DNI:addNote(CollectibleType.AGONY_C_PLACEHOLDER)
-	--end
-	debug_tbl1 = toRender
-	--debug_text = tostring(Game():IsPaused())
+function DNI:triggerPauseMenu(ent, inHook, btnAction) --for better pause detection
+	if ent == nil and inHook == 0 and btnAction == 16 and (Input.IsActionTriggered(ButtonAction.ACTION_MENUBACK, 0) or Input.IsActionTriggered(ButtonAction.ACTION_PAUSE, 0))then
+		DNI.Paused = true
+		-- if the game is paused, the only input the game (besides menu navigation) listens to is if you're holding R to restart the run
+		-- this in combination with the IsActionTriggered functions is used to make sure that the menu only loads when pressing one of the two pause buttons.
+		-- originally I used Game():IsPaused(), but that appears to also trigger in many other scenarios like:
+			--While a GiantBook animation is playing
+			--In the Console
+			--Between rooms
+	end
 end
 
-DNI:AddCallback(ModCallbacks.MC_POST_UPDATE, DNI.test)
+function DNI:reset() --resets vars
+	if Game():GetFrameCount() <= 1 or not Game():IsPaused() then
+		DNI.Appeared = false
+		DNI.PauseMenu = true
+		DNI.Paused = false
+		DNI.MenuItem = DNI.MenuItems.RESUME
+	end
+end
+
+DNI:AddCallback(ModCallbacks.MC_POST_UPDATE, DNI.reset)
+DNI:AddCallback(ModCallbacks.MC_INPUT_ACTION, DNI.triggerPauseMenu)
 DNI:AddCallback(ModCallbacks.MC_POST_RENDER, DNI.renderPause)
