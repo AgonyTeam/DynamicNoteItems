@@ -9,7 +9,7 @@ DNI.MenuItems = {
 	EXIT = 3
 }
 DNI.MenuItem = DNI.MenuItems.RESUME
-DNI.POS_ITEMS_PAUSE = Vector(250, 100) --position of first item (currently wrong)
+DNI.POS_ITEMS_PAUSE = Vector(255, 117) --position of first item
 DNI.POS_MY_LIST = Vector(290,135) --item list position
 --DeathCard
 
@@ -41,6 +41,10 @@ function DNI:addNote(id) --adds a note for an item
 	sprite:ReplaceSpritesheet(0, "gfx/ui/deathnotes/" .. DNI:getFilename(id))
 	sprite:LoadGraphics()
 	table.insert(toRender, sprite)
+end
+
+function DNI:calcPauseItemPosition(index)
+	return Vector(DNI.POS_ITEMS_PAUSE.X + math.floor((index-1)/4)*16 + math.floor((index-1)/4), DNI.POS_ITEMS_PAUSE.Y + ((index-1)%4)*16 + ((index-1)%4))
 end
 
 function DNI:renderPause() --renders the pause menu list
@@ -89,7 +93,6 @@ function DNI:renderPause() --renders the pause menu list
 		toRender.HUD:Update()
 		for index, sprite in pairs(toRender) do --render note sprites
 			if index ~= "HUD" then
-				local renderPos = Vector(DNI.POS_ITEMS_PAUSE.X + (index-1)*16, DNI.POS_ITEMS_PAUSE.Y)
 				--play the same anims and color as hud
 				if toRender.HUD:IsPlaying("Appear") and not sprite:IsPlaying("Appear") then
 					sprite:Play("Appear")
@@ -99,7 +102,7 @@ function DNI:renderPause() --renders the pause menu list
 					sprite:Play("Disappear")
 				end
 				sprite.Color = toRender.HUD.Color
-				sprite:RenderLayer(0, renderPos)
+				sprite:RenderLayer(0, DNI:calcPauseItemPosition(index))
 				sprite:Update()
 			end
 		end
