@@ -10,7 +10,7 @@ DNI.MenuItems = {
 	EXIT = 3
 }
 DNI.MenuItem = DNI.MenuItems.RESUME
-DNI.POS_ITEMS_PAUSE = Vector(255, 117) --position of first item
+DNI.POS_ITEMS_PAUSE = Vector(253, 117) --position of first item
 DNI.POS_MY_LIST = Vector(290,135) --item list position
 --DeathCard
 
@@ -105,7 +105,11 @@ function DNI:renderPause() --renders the pause menu list
 					sprite:Play("Disappear")
 				end
 				sprite.Color = toRender.HUD.Color
-				sprite:RenderLayer(0, DNI:calcPauseItemPosition(index))
+				if index <= 24 then
+					sprite:RenderLayer(0, DNI:calcPauseItemPosition(index))
+				else
+					toRender[index] = nil
+				end
 				sprite:Update()
 			end
 		end
@@ -131,6 +135,7 @@ function DNI:triggerPauseMenu(ent, inHook, btnAction) --for better pause detecti
 end
 
 function DNI:reset() --resets vars
+	debug_tbl1 = toRender
 	if Game():GetFrameCount() <= 1 or not Game():IsPaused() then
 		DNI.Appeared = false
 		DNI.PauseMenu = false
