@@ -1,5 +1,6 @@
 local DNI = RegisterMod("Dynamic Note Items", 1)
 
+DNI.LAST_VANILLA_ID = 519 --need a way to get this dynamically
 --PauseMenu
 DNI.Appeared = false
 DNI.PauseMenu = false
@@ -38,14 +39,24 @@ end
 
 function DNI:addNote(id) --adds a note for an item
 	local sprite = Sprite()
-	sprite:Load("gfx/ui/dynamicnotes.anm2", false)
-	sprite:ReplaceSpritesheet(0, "gfx/ui/deathnotes/" .. DNI:getFilename(id))
-	sprite:LoadGraphics()
-	table.insert(toRender, sprite)
+	if id > DNI.LAST_VANILLA_ID then
+		sprite:Load("gfx/ui/dynamicnotes.anm2", false)
+		sprite:ReplaceSpritesheet(0, "gfx/ui/deathnotes/" .. DNI:getFilename(id))
+		sprite:LoadGraphics()
+	else
+		sprite:Load("gfx/ui/death screen.anm2", false)
+		sprite:ReplaceSpritesheet(6, "gfx/ui/death items_copy.png")
+		sprite:LoadGraphics()
+	end
+	table.insert(toRender, {sprite, id})
 end
 
 function DNI:calcPauseItemPosition(index)
-	return Vector(DNI.POS_ITEMS_PAUSE.X + math.floor((index-1)/4)*16 + math.floor((index-1)/4), DNI.POS_ITEMS_PAUSE.Y + ((index-1)%4)*16 + ((index-1)%4))
+	if toRender[index][2] > DNI.LAST_VANILLA_ID then
+		return Vector(DNI.POS_ITEMS_PAUSE.X + math.floor((index-1)/4)*16 + math.floor((index-1)/4), DNI.POS_ITEMS_PAUSE.Y + ((index-1)%4)*16 + ((index-1)%4))
+	else
+		return Vector(DNI.POS_ITEMS_PAUSE.X - 88 + math.floor((index-1)/4)*16 + math.floor((index-1)/4), DNI.POS_ITEMS_PAUSE.Y + 6 + ((index-1)%4)*16 + ((index-1)%4))
+	end
 end
 
 function DNI:renderPause() --renders the pause menu list
@@ -94,19 +105,37 @@ function DNI:renderPause() --renders the pause menu list
 		end
 		toRender.HUD:Render(DNI.POS_MY_LIST, Vector(0,0), Vector(0,0))
 		toRender.HUD:Update()
-		for index, sprite in pairs(toRender) do --render note sprites
+		for index, spriteTbl in pairs(toRender) do --render note sprites
 			if index ~= "HUD" then
+				local sprite = spriteTbl[1]
+				local id = spriteTbl[2]
 				--play the same anims and color as hud
-				if toRender.HUD:IsPlaying("Appear") and not sprite:IsPlaying("Appear") then
-					sprite:Play("Appear")
-				elseif toRender.HUD:IsPlaying("Idle") and not sprite:IsPlaying("Idle") then
-					sprite:Play("Idle")
-				elseif toRender.HUD:IsPlaying("Dissapear") and not sprite:IsPlaying("Disappear") then
-					sprite:Play("Disappear")
+				if sprite:GetDefaultAnimationName() ~= "Diary" then
+					if toRender.HUD:IsPlaying("Appear") and not sprite:IsPlaying("Appear") then
+						sprite:Play("Appear")
+					elseif toRender.HUD:IsPlaying("Idle") and not sprite:IsPlaying("Idle") then
+						sprite:Play("Idle")
+					elseif toRender.HUD:IsPlaying("Dissapear") and not sprite:IsPlaying("Disappear") then
+						sprite:Play("Disappear")
+					end
+					sprite.Color = toRender.HUD.Color
+				else
+					--vanilla items only have one animation, so they need to be handled differently
+					if toRender.HUD:IsPlaying("Idle") or (toRender.HUD:IsPlaying("Appear") and toRender.HUD:GetFrame() >= 10) then
+						sprite:SetFrame("Diary", id-1)
+					elseif toRender.HUD:IsPlaying("Dissapear") then
+						toRender[index] = nil
+					end
+					if not toRender.HUD:IsPlaying("Dissapear") then
+						sprite.Color = toRender.HUD.Color
+					end
 				end
-				sprite.Color = toRender.HUD.Color
-				if index <= 24 then
-					sprite:RenderLayer(0, DNI:calcPauseItemPosition(index))
+				if index <= 24 and toRender[index] ~= nil then
+					if sprite:GetDefaultAnimation() ~= "Diary" then
+						sprite:RenderLayer(0, DNI:calcPauseItemPosition(index))
+					else
+						sprite:RenderLayer(6, DNI:calcPauseItemPosition(index))
+					end
 				else
 					toRender[index] = nil
 				end
