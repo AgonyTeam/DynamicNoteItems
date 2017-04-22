@@ -22,10 +22,16 @@ local toRender = {
 toRender.HUD:Load("gfx/ui/pausescreen_mystuff.anm2", true) --init hud sprite
 
 function DNI:getCurrentItems() --returns the items the player has
+	local itemCfg = Isaac.GetItemConfig()
+	local numCol = #(itemCfg:GetCollectibles())
+	if type(numCol) ~= "number" then
+		numCol = 9999 --Mac seems to have trouble with this number thing
+	end
+	
 	local currList = {}
 	local player = Isaac.GetPlayer(0)
-	for name, id in pairs(CollectibleType) do
-		if name ~= "NUM_COLLECTIBLES" and player:HasCollectible(id) then
+	for id = 1, numCol do
+		if itemCfg:GetCollectible(id) ~= nil and player:HasCollectible(id) then
 			table.insert(currList, id)
 		end
 	end
